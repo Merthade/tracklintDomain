@@ -175,6 +175,7 @@ td.pick code{color:var(--accent)}
 .rules li{list-style:none;color:var(--muted);padding:6px 0 6px 22px;position:relative;font-size:14.5px;max-width:72ch}
 .rules li:before{content:"";position:absolute;left:3px;top:14px;width:6px;height:6px;border-radius:50%;background:var(--accent-dim)}
 .rules code{font-family:var(--mono);font-size:12.5px;color:var(--text);background:var(--panel-2);padding:1px 5px;border-radius:4px}
+.sub{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:12px 0 6px;padding-top:9px;border-top:1px solid var(--border)}
 .vocab{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .vocab code{font-family:var(--mono);font-size:12px;color:#7ebcfb;background:rgba(90,169,249,.13);padding:3px 8px;border-radius:5px}
 
@@ -395,13 +396,12 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
       <p class="card-label">The same flow, two events</p>
       <p class="ev">onboardingStep_view</p>
       <p class="ev">onboardingStep_complete</p>
-      <p class="ev" style="color:var(--faint)">&nbsp;</p>
-      <p class="ev" style="color:var(--faint)">the step number moved into</p>
+      <p class="sub">properties, not events</p>
       <p class="ev">flow_step <span>= 5</span></p>
       <p class="ev">flow_step_name <span>= "Set first alarm"</span></p>
     </div>
   </div>
-  <p class="note">Two problems in one picture. The names do not group, and the step number was never a name in the first place.</p>
+  <p class="note">Two problems in one picture. The names do not group, and the step number was never a name in the first place: it is a property.</p>
 
   <h3 style="margin-top:34px;font-size:17px">Name or property?</h3>
   <p>The test: could you ever want to compare these to each other? Then they are one event and a property.</p>
@@ -418,7 +418,7 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
     <div class="card good">
       <p class="card-label">One event you can slice</p>
       <p class="ev">onboardingStep_view</p>
-      <p class="ev" style="color:var(--faint)">&nbsp;</p>
+      <p class="sub">properties, not events</p>
       <p class="ev">flow_name <span>= "onboarding"</span></p>
       <p class="ev">flow_step <span>= 5</span></p>
       <p class="ev">flow_step_name <span>= "Set first alarm"</span></p>
@@ -428,7 +428,8 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
 
   <h3 style="margin-top:34px;font-size:17px">The rest of the rules</h3>
   <ul class="rules">
-    <li>One underscore, and it separates <b>fields, not words</b>. <code>onboardingStep_complete</code> splits into exactly two parts, so a name is parseable, not just readable. That is why the location is camelCase.</li>
+    <li><b>In an event name</b>, one underscore, and it separates <b>fields, not words</b>. <code>onboardingStep_complete</code> splits into exactly two parts, so a name is parseable, not just readable. That is why the location is camelCase: it keeps a multi-word location inside one field.</li>
+    <li><b>Properties are a different namespace</b>, and the rule does not apply to them. They are plain snake_case with as many words as they need: <code>flow_step_name</code>, <code>element_group</code>, <code>days_since_first_launch</code>. Only event names carry the two-field structure, because only event names need to be parsed into one.</li>
     <li>The verb comes from a <b>closed list</b>, so add, new and save never become three names for one thing.</li>
     <li>Not a screen? An <code>app</code>-prefixed location, so there is never a second underscore: <code>app_open</code>, <code>appCalendarSync_fail</code>.</li>
   </ul>
