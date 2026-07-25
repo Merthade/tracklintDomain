@@ -125,7 +125,7 @@ h1{font-size:39px;line-height:1.15;letter-spacing:-0.03em;margin-bottom:18px}
 
 /* the linter passing over the names: a slow sweep across the compare cards */
 .card{position:relative;overflow:hidden}
-.card.bad:before{content:"";position:absolute;left:0;right:0;height:38%;top:-38%;pointer-events:none;
+.hero .card.bad:before{content:"";position:absolute;left:0;right:0;height:38%;top:-38%;pointer-events:none;
   background:linear-gradient(180deg,transparent,rgba(63,214,143,.12) 60%,rgba(63,214,143,.26));
   border-bottom:1px solid rgba(63,214,143,.42);
   animation:sweep 5.4s cubic-bezier(.4,0,.5,1) infinite}
@@ -134,8 +134,8 @@ h1{font-size:39px;line-height:1.15;letter-spacing:-0.03em;margin-bottom:18px}
   margin-left:5px;vertical-align:middle;animation:blip 2.6s ease-in-out infinite}
 @keyframes blip{0%,100%{opacity:.35}50%{opacity:1}}
 @media (prefers-reduced-motion: reduce){
-  .card.bad:before,.ev .flag{animation:none}
-  .card.bad:before{display:none}
+  .hero .card.bad:before,.ev .flag{animation:none}
+  .hero .card.bad:before{display:none}
 }
 
 /* recreated finding cards (illustrative, no real customer or app data) */
@@ -291,56 +291,57 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
 
   <p class="note">Source: my own analytics project, 365 days to 25 July 2026, across three shipped iOS apps. Nothing modelled, nothing extrapolated.</p>
 
-  <h2 style="margin-top:44px">The shapes this takes in a real codebase</h2>
-  <p>Four of them, written out the way they surface in review. The examples below use invented event names, not anybody's real product.</p>
+  <h2 style="margin-top:44px">What it found in my alarm app</h2>
+  <p>Four real findings from the same scan, each a different kind of problem. Nothing here is invented, and all four were news to me.</p>
 
   <div class="finds">
 
     <div class="find">
       <div class="find-head">
         <span class="tag blue">Add tracking</span>
-        <span class="find-title"><span class="pill screen">CheckoutReviewView</span> sends no events at all</span>
+        <span class="find-title"><span class="pill screen">FABNapTipOverlay</span> sends no events at all</span>
         <span class="tag red">error</span><span class="find-rule">coverage/dark-screen</span>
       </div>
-      <p>The last screen before payment is presented to users and has zero analytics: no screen view, no interaction events. You cannot see how often people reach it, or how many turn back at it.</p>
-      <p class="find-code">presented as a sheet from CheckoutFlow, no tracking calls in scope</p>
+      <p>A coachmark overlay that teaches people the nap feature. It is presented to users and has zero analytics: no screen view, no dismissal, nothing. I cannot tell you how many people have seen it, or whether it works.</p>
+      <p class="find-code">presented via fullScreenCover in MainTabView.swift:117</p>
       <div class="find-fix"><span class="find-fix-label">Proposed change</span>
-        <p>Send a screen view when it appears, so the step becomes visible in the funnel.</p></div>
+        <p>Send a shown and dismissed pair, so the coachmark can be judged rather than assumed.</p></div>
     </div>
 
     <div class="find">
       <div class="find-head">
         <span class="tag amber">Rename</span>
-        <span class="find-title">Two events cover one action: <span class="pill event">cart_add</span> and <span class="pill event">cart_added</span></span>
+        <span class="find-title">Two events, one concept: <span class="pill event">review_prompt</span> and <span class="pill event">review_prompt_requested</span></span>
         <span class="tag red">error</span><span class="find-rule">naming/duplicate-concept</span>
       </div>
-      <p>Both are live and both are still sending. Any count of items added to the cart is short unless the query unions the pair, and nothing about either name says which one the current code uses.</p>
-      <p class="find-code">two call sites, two different names, same moment</p>
+      <p>I renamed the event and the old name kept arriving from versions already on people's phones. 610 events under the new name, 160 under the old one, so a fifth of the concept sits somewhere I had stopped looking.</p>
+      <p class="find-code">610 vs 160 events, both still current at the time of the scan</p>
       <div class="find-fix"><span class="find-fix-label">Proposed change</span>
-        <p>Keep the one current code sends, treat the other as historical, and note the cutover date for anyone querying across it.</p></div>
+        <p>Keep the name current code sends, treat the other as historical, and note the cutover for anyone querying across it.</p></div>
     </div>
 
     <div class="find">
       <div class="find-head">
         <span class="tag amber">Rename</span>
-        <span class="find-title"><span class="pill event">signup_prompt</span> is a thing, not an action</span>
+        <span class="find-title"><span class="pill event">alarm_add</span> does not do what its name says</span>
         <span class="tag amber">warning</span><span class="find-rule">naming/verb</span>
       </div>
-      <p>Sibling events use a past-tense verb, so this one sorts and reads apart from the rest. Small on its own, and the reason a taxonomy stops being predictable once a few of them pile up.</p>
+      <p>It fires when the alarm editor opens, not when an alarm is added. It reads like a duplicate of <span class="pill event">alarm_created</span>, it sits next to it in every list, and it has 5,282 events behind it. Anyone counting alarms created from this name gets a number that is wrong and looks fine.</p>
+      <p class="find-code">fires from AddEditAlarmView.swift:347, on open</p>
       <div class="find-fix"><span class="find-fix-label">Proposed change</span>
-        <p>Rename so the last part is an action, matching the events around it.</p></div>
+        <p>Rename it for the moment it actually marks, or drop it and rely on the screen view already sent on the same line.</p></div>
     </div>
 
     <div class="find">
       <div class="find-head">
         <span class="tag slate">Fix properties</span>
-        <span class="find-title"><span class="pill event">order_completed</span> carries <span class="pill prop">payment_method</span> on only some events</span>
-        <span class="tag amber">warning</span><span class="find-rule">properties/call-site-drift</span>
+        <span class="find-title"><span class="pill event">Application Installed</span> arrives without <span class="pill prop">app_name</span></span>
+        <span class="tag red">error</span><span class="find-rule">properties/missing-super-prop</span>
       </div>
-      <p>One code path passes the full order, another does not, so the same event name arrives in two different shapes. Any breakdown by payment method silently drops the events that came from the second path.</p>
-      <p class="find-code">two call sites, one passes the order object, one does not</p>
+      <p>1,330 installs in 90 days carried no app_name, because the SDK captures the install before my code registers that property. Three apps report into one project and every query filters on app_name, so my install numbers were quietly excluding every install.</p>
+      <p class="find-code">registered after SDK setup, so the first event misses it</p>
       <div class="find-fix"><span class="find-fix-label">Proposed change</span>
-        <p>Send the same properties from every call site, so one event name means one contract.</p></div>
+        <p>Register the property before SDK setup completes, or filter installs on the SDK's own app property instead.</p></div>
     </div>
 
   </div>
@@ -376,23 +377,68 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
     </tbody>
   </table></div>
 
-  <p style="margin-top:20px">All three work, as long as something holds the line. snake_case object_action is what most analytics tools assume and it is a perfectly good choice if every event really does end in a past-tense verb. camelCase suits teams already writing everything else that way. The failure mode is never the convention you picked, it is having three of them at once.</p>
+  <p style="margin-top:20px">All three work, as long as something holds the line. The failure mode is never the convention you picked, it is having three of them at once.</p>
 
-  <h3 style="margin-top:30px;font-size:17px">What where_what does differently</h3>
+  <h3 style="margin-top:34px;font-size:17px">Why the location goes first</h3>
+  <p>An event list is sorted alphabetically, and that is the only order you ever see it in.</p>
+  <div class="compare">
+    <div class="card bad">
+      <p class="card-label">One flow, as it sorts</p>
+      <p class="ev">onboarding_step_1 <span>1 before 2</span></p>
+      <p class="ev">onboarding_step_21 <span>and 21 before 5</span></p>
+      <p class="ev">onboarding_step_5</p>
+      <p class="ev">onboarding_step_complete <span>a verb, mixed in</span></p>
+      <p class="ev">onboarding_step_viewed</p>
+      <p class="ev">onboarding_steps_done <span>near-duplicate, hiding</span></p>
+    </div>
+    <div class="card good">
+      <p class="card-label">The same flow, two events</p>
+      <p class="ev">onboardingStep_view</p>
+      <p class="ev">onboardingStep_complete</p>
+      <p class="ev" style="color:var(--faint)">&nbsp;</p>
+      <p class="ev" style="color:var(--faint)">the step number moved into</p>
+      <p class="ev">flow_step <span>= 5</span></p>
+      <p class="ev">flow_step_name <span>= "Set first alarm"</span></p>
+    </div>
+  </div>
+  <p class="note">Two problems in one picture. The names do not group, and the step number was never a name in the first place.</p>
+
+  <h3 style="margin-top:34px;font-size:17px">Name or property?</h3>
+  <p>The test: could you ever want to compare these to each other? Then they are one event and a property.</p>
+  <div class="compare">
+    <div class="card bad">
+      <p class="card-label">21 events you cannot compare</p>
+      <p class="ev">onboarding_step_1_viewed</p>
+      <p class="ev">onboarding_step_2_viewed</p>
+      <p class="ev">onboarding_step_3_viewed</p>
+      <p class="ev" style="color:var(--faint)">... and eighteen more</p>
+      <p class="ev" style="color:var(--faint)">no drop-off curve without</p>
+      <p class="ev" style="color:var(--faint)">stitching 21 queries together</p>
+    </div>
+    <div class="card good">
+      <p class="card-label">One event you can slice</p>
+      <p class="ev">onboardingStep_view</p>
+      <p class="ev" style="color:var(--faint)">&nbsp;</p>
+      <p class="ev">flow_name <span>= "onboarding"</span></p>
+      <p class="ev">flow_step <span>= 5</span></p>
+      <p class="ev">flow_step_name <span>= "Set first alarm"</span></p>
+      <p class="ev" style="color:var(--faint)">group by step, done</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:34px;font-size:17px">The rest of the rules</h3>
   <ul class="rules">
-    <li>The single underscore is a <b>field delimiter, not a word separator</b>. Every name splits cleanly into two fields, so a name is parseable rather than just readable. That is why the location is camelCase: <code>onboardingStep</code> stays one field.</li>
-    <li>The second field comes from a <b>closed vocabulary</b>, and that is the part that actually fixes things. Four interactions: <code>view</code>, <code>click</code>, <code>scroll</code>, <code>submit</code>. Six lifecycle verbs: <code>create</code>, <code>update</code>, <code>delete</code>, <code>complete</code>, <code>start</code>, <code>fail</code>. No synonyms, so add, new and save never turn into three names for one thing.</li>
-    <li><b>Location first</b>, so events sort into feature groups. Every <code>onboardingStep_*</code> event sits together in the picker, which is how anyone actually navigates a long event list.</li>
-    <li>Anything that is not a screen gets an <code>app</code>-prefixed location, so there is <b>never a second underscore</b>: <code>app_open</code>, <code>appCalendarSync_fail</code>. Background work becomes its own recognisable bucket.</li>
-    <li><b>Detail belongs in properties, not in the name.</b> Screen, section, flow, step, element: those are properties you can filter and group by. Every one you fold into an event name instead is a name nobody can query across.</li>
+    <li>One underscore, and it separates <b>fields, not words</b>. <code>onboardingStep_complete</code> splits into exactly two parts, so a name is parseable, not just readable. That is why the location is camelCase.</li>
+    <li>The verb comes from a <b>closed list</b>, so add, new and save never become three names for one thing.</li>
+    <li>Not a screen? An <code>app</code>-prefixed location, so there is never a second underscore: <code>app_open</code>, <code>appCalendarSync_fail</code>.</li>
   </ul>
 
   <div class="vocab">
     <code>view</code><code>click</code><code>scroll</code><code>submit</code><code>create</code><code>update</code><code>delete</code><code>complete</code><code>start</code><code>fail</code>
   </div>
-  <p class="note">That is the entire verb list. Ten words, closed on purpose.</p>
+  <p class="note">The whole verb list. Ten words, closed on purpose.</p>
 
-  <p style="margin-top:18px">It comes out of eight years of analytics and data governance work, adapted to how product analytics tools want to be fed rather than how a warehouse does. You can take the convention and use it without ever installing anything, and if your team already has one, keep yours. The point is that something enforces it.</p>
+  <p style="margin-top:18px">It comes out of eight years of analytics and data governance work. Take it and use it without installing anything, and if your team already has a convention, keep yours. The point is that something enforces it.</p>
 </div></section>
 
 <section id="who"><div class="wrap">
