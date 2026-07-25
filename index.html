@@ -50,7 +50,7 @@
 {"@type":"Question","name":"What is an event taxonomy or tracking plan?","acceptedAnswer":{"@type":"Answer","text":"The set of event names your product sends plus the rules behind them. A good one is predictable enough that two developers pick the same name for the same kind of action, and descriptive detail lives in event properties instead of turning into new event names. Most teams keep it in a spreadsheet, where it drifts away from the code."}},
 {"@type":"Question","name":"Why do analytics event names become inconsistent?","acceptedAnswer":{"@type":"Answer","text":"Because nothing checks them. Every developer picks a verb, and add, create, new and save all end up meaning the same thing. Nothing errors, no build fails, and the names accumulate over releases until two names cover one action and every funnel built on them is short."}},
 {"@type":"Question","name":"How do you find screens with missing analytics tracking?","acceptedAnswer":{"@type":"Answer","text":"Not in a dashboard, because a dashboard only shows what was sent, so tracking you forgot is invisible there by definition. Finding it means comparing the screens that exist in the code against the events the code actually sends."}},
-{"@type":"Question","name":"When can I use Tracklint?","acceptedAnswer":{"@type":"Answer","text":"It is in development and being used against real shipped apps. Join the waitlist for one email when it opens."}}
+{"@type":"Question","name":"Should analytics events use snake_case or camelCase?","acceptedAnswer":{"@type":"Answer","text":"Either works as long as one is applied consistently. snake_case object_action, such as paywall_viewed, is what most product analytics tools assume. camelCase suits teams already writing everything else that way. The damage comes from mixing conventions, or from an open-ended verb list where add, create, new and save all end up meaning the same thing. Pick one, close the verb list, and put descriptive detail in event properties rather than in the name."}},{"@type":"Question","name":"When can I use Tracklint?","acceptedAnswer":{"@type":"Answer","text":"It is in development and being used against real shipped apps. Join the waitlist for one email when it opens."}}
 ]}]}
 </script>
 
@@ -158,6 +158,25 @@ h1{font-size:39px;line-height:1.15;letter-spacing:-0.03em;margin-bottom:18px}
 .pill.event{color:#7ebcfb;background:rgba(90,169,249,.13)}
 .pill.prop{color:#f0c26e;background:rgba(232,179,75,.13)}
 .pill.screen{color:#c7a6f9}
+
+/* naming comparison table */
+.tblwrap{margin-top:24px;overflow-x:auto;border:1px solid var(--border);border-radius:11px;background:var(--panel)}
+/* the table needs more room than the 70ch text column: let it breathe on desktop */
+@media (min-width:940px){.tblwrap{width:calc(100% + 96px);margin-left:-48px}}
+table{border-collapse:collapse;width:100%;min-width:580px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);font-size:12.5px;vertical-align:top}
+tr:last-child td{border-bottom:none}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:600;white-space:nowrap}
+th.pick{color:var(--accent)}
+td.moment{color:var(--muted);min-width:150px}
+td code{font-family:var(--mono);font-size:11.5px;color:var(--text);white-space:nowrap}
+td.pick{background:rgba(63,214,143,.045)}
+td.pick code{color:var(--accent)}
+.rules li{list-style:none;color:var(--muted);padding:6px 0 6px 22px;position:relative;font-size:14.5px;max-width:72ch}
+.rules li:before{content:"";position:absolute;left:3px;top:14px;width:6px;height:6px;border-radius:50%;background:var(--accent-dim)}
+.rules code{font-family:var(--mono);font-size:12.5px;color:var(--text);background:var(--panel-2);padding:1px 5px;border-radius:4px}
+.vocab{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.vocab code{font-family:var(--mono);font-size:12px;color:#7ebcfb;background:rgba(90,169,249,.13);padding:3px 8px;border-radius:5px}
 
 .who li{list-style:none;color:var(--muted);padding:6px 0 6px 22px;position:relative;font-size:14.5px;max-width:72ch}
 .who li:before{content:"";position:absolute;left:3px;top:14px;width:6px;height:6px;border-radius:50%;background:var(--accent-dim)}
@@ -327,6 +346,55 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
   </div>
 </div></section>
 
+<section id="naming"><div class="wrap">
+  <h2>How to name an event so this stops happening</h2>
+  <p>Most of the mess above is a naming problem, and naming problems are solvable with a rule rather than discipline. Here is the same handful of moments written three ways: the snake_case convention most product analytics tools assume, camelCase, and the one I use.</p>
+
+  <div class="tblwrap"><table>
+    <thead><tr>
+      <th>The moment</th>
+      <th>snake_case object_action</th>
+      <th>camelCase</th>
+      <th class="pick">where_what</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="moment">Someone sees the paywall</td>
+        <td><code>paywall_viewed</code></td><td><code>paywallViewed</code></td>
+        <td class="pick"><code>paywall_view</code></td></tr>
+      <tr><td class="moment">An alarm is created, from the editor</td>
+        <td><code>alarm_created</code></td><td><code>alarmCreated</code></td>
+        <td class="pick"><code>alarmEditor_create</code></td></tr>
+      <tr><td class="moment">An onboarding step is finished</td>
+        <td><code>onboarding_step_completed</code></td><td><code>onboardingStepCompleted</code></td>
+        <td class="pick"><code>onboardingStep_complete</code></td></tr>
+      <tr><td class="moment">The app comes to the foreground</td>
+        <td><code>app_opened</code></td><td><code>appOpened</code></td>
+        <td class="pick"><code>app_open</code></td></tr>
+      <tr><td class="moment">A background calendar sync fails</td>
+        <td><code>calendar_sync_failed</code></td><td><code>calendarSyncFailed</code></td>
+        <td class="pick"><code>appCalendarSync_fail</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <p style="margin-top:20px">All three work, as long as something holds the line. snake_case object_action is what most analytics tools assume and it is a perfectly good choice if every event really does end in a past-tense verb. camelCase suits teams already writing everything else that way. The failure mode is never the convention you picked, it is having three of them at once.</p>
+
+  <h3 style="margin-top:30px;font-size:17px">What where_what does differently</h3>
+  <ul class="rules">
+    <li>The single underscore is a <b>field delimiter, not a word separator</b>. Every name splits cleanly into two fields, so a name is parseable rather than just readable. That is why the location is camelCase: <code>onboardingStep</code> stays one field.</li>
+    <li>The second field comes from a <b>closed vocabulary</b>, and that is the part that actually fixes things. Four interactions: <code>view</code>, <code>click</code>, <code>scroll</code>, <code>submit</code>. Six lifecycle verbs: <code>create</code>, <code>update</code>, <code>delete</code>, <code>complete</code>, <code>start</code>, <code>fail</code>. No synonyms, so add, new and save never turn into three names for one thing.</li>
+    <li><b>Location first</b>, so events sort into feature groups. Every <code>onboardingStep_*</code> event sits together in the picker, which is how anyone actually navigates a long event list.</li>
+    <li>Anything that is not a screen gets an <code>app</code>-prefixed location, so there is <b>never a second underscore</b>: <code>app_open</code>, <code>appCalendarSync_fail</code>. Background work becomes its own recognisable bucket.</li>
+    <li><b>Detail belongs in properties, not in the name.</b> Screen, section, flow, step, element: those are properties you can filter and group by. Every one you fold into an event name instead is a name nobody can query across.</li>
+  </ul>
+
+  <div class="vocab">
+    <code>view</code><code>click</code><code>scroll</code><code>submit</code><code>create</code><code>update</code><code>delete</code><code>complete</code><code>start</code><code>fail</code>
+  </div>
+  <p class="note">That is the entire verb list. Ten words, closed on purpose.</p>
+
+  <p style="margin-top:18px">It comes out of eight years of analytics and data governance work, adapted to how product analytics tools want to be fed rather than how a warehouse does. You can take the convention and use it without ever installing anything, and if your team already has one, keep yours. The point is that something enforces it.</p>
+</div></section>
+
 <section id="who"><div class="wrap">
   <h2>Who this is for</h2>
   <ul class="who">
@@ -359,6 +427,9 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
 
   <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>How do you find screens with missing tracking?</summary>
     <p>Not in a dashboard. A dashboard only shows what was sent, so tracking you forgot is invisible there by definition. The only way to find it is to compare the screens that exist in your code against the events your code actually sends.</p></details>
+
+  <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>Should events use snake_case or camelCase?</summary>
+    <p>Either, as long as one of them is applied consistently. snake_case object_action is what most product analytics tools assume, and camelCase suits teams already writing everything else that way. The damage comes from mixing conventions, or from an open-ended verb list where add, create, new and save all end up meaning the same thing. Pick one, close the verb list, and keep descriptive detail in properties rather than in the name.</p></details>
 
   <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>When can I use it?</summary>
     <p>It is in development and running against real shipped apps. Join the waitlist and you will get one email when it opens.</p></details>
