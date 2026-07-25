@@ -47,7 +47,7 @@
 {"@type":"WebSite","name":"Tracklint","url":"https://tracklint.dev/","description":"Analytics instrumentation and event naming quality, checked in your codebase.","author":{"@type":"Person","name":"Emil Ozols"}},
 {"@type":"FAQPage","mainEntity":[
 {"@type":"Question","name":"What is analytics instrumentation?","acceptedAnswer":{"@type":"Answer","text":"The code in your app that sends analytics events: the calls, the event names they use, and the properties they attach. It is the layer between what a user does and what your product analytics tool records, and developers write it rather than managing it in the analytics tool itself."}},
-{"@type":"Question","name":"What is an event taxonomy or tracking plan?","acceptedAnswer":{"@type":"Answer","text":"The set of event names your product sends plus the rules behind them. A good one is predictable enough that two developers pick the same name for the same kind of action, and descriptive detail lives in event properties instead of turning into new event names. Most teams keep it in a spreadsheet, where it drifts away from the code."}},
+
 {"@type":"Question","name":"Why do analytics event names become inconsistent?","acceptedAnswer":{"@type":"Answer","text":"Because nothing checks them. Every developer picks a verb, and add, create, new and save all end up meaning the same thing. Nothing errors, no build fails, and the names accumulate over releases until two names cover one action and every funnel built on them is short."}},
 {"@type":"Question","name":"How do you find screens with missing analytics tracking?","acceptedAnswer":{"@type":"Answer","text":"Not in a dashboard, because a dashboard only shows what was sent, so tracking you forgot is invisible there by definition. Finding it means comparing the screens that exist in the code against the events the code actually sends."}},
 {"@type":"Question","name":"Should analytics events use snake_case or camelCase?","acceptedAnswer":{"@type":"Answer","text":"Either works as long as one is applied consistently. snake_case object_action, such as paywall_viewed, is what most product analytics tools assume. camelCase suits teams already writing everything else that way. The damage comes from mixing conventions, or from an open-ended verb list where add, create, new and save all end up meaning the same thing. Pick one, close the verb list, and put descriptive detail in event properties rather than in the name."}},{"@type":"Question","name":"Should the event naming convention apply to properties too?","acceptedAnswer":{"@type":"Answer","text":"No, and for a practical reason rather than a stylistic one. Most properties on any event are added by the analytics SDK, not by you, and those are multi-word snake_case that you cannot rename. On one real mobile event, 43 of 71 properties were SDK-owned. A convention you can only apply to a third of the namespace does not produce consistency, it produces two conventions. Properties also become columns in a warehouse, where camelCase is hostile: unquoted identifiers get lowercased in some engines, destroying the word boundary. Give properties their own looser rules instead: one casing, a subject prefix so related properties group together, no synonyms for one concept, and predictable shapes such as _count, _date, and is_ or has_ for booleans."}},{"@type":"Question","name":"When can I use Tracklint?","acceptedAnswer":{"@type":"Answer","text":"It is in development and being used against real shipped apps. Join the waitlist for one email when it opens."}}
@@ -279,26 +279,26 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
 <section id="problem"><div class="wrap">
   <h2>Tracking breaks quietly, and a dashboard cannot tell you</h2>
   <p>Analytics instrumentation is code, but it is the only code with no failure mode. A missing event does not throw. A misnamed event does not fail a build. Nothing goes red. Your app keeps working, events keep arriving, and the numbers are quietly wrong for months.</p>
-  <p>It shows up in two shapes. Coverage gaps: a screen ships, the event is forgotten, and nobody notices until someone asks a question the data cannot answer. Naming drift: two event names grow around one action, so every funnel, retention curve and conversion rate built on either one is short, in a way that still looks perfectly reasonable.</p>
-  <p>Both are invisible in a product analytics tool, because anything downstream of your code can only report what your code actually sent. Tracking you forgot is undetectable there by definition. That is why the check belongs where the events are written, next to the code and in review, rather than in a tracking plan spreadsheet that drifts a little further from reality with every release.</p>
+  <p>It shows up in two shapes. Coverage gaps: a screen ships, the event is forgotten, and nobody notices until someone asks a question the data cannot answer. Naming drift: two names grow around one action, so every funnel built on either one is short in a way that still looks reasonable.</p>
+  <p>Neither is visible in a product analytics tool, because anything downstream of your code can only report what your code sent. Tracking you forgot is undetectable there by definition. That is why the check belongs next to the code, in review, rather than in a spreadsheet that drifts further from reality with every release.</p>
 </div></section>
 
 <section id="evidence"><div class="wrap">
   <h2>What it looked like in my own apps</h2>
-  <p>Not a survey, and not somebody else's case study. This is real event volume from apps I built and shipped myself. None of it is here because I did not know better. It is here because I was shipping fast, a lot of the code was written by AI and did not hold my conventions, and every time something looked odd in a dashboard I was already two features into the next thing.</p>
+  <p>Real event volume from apps I built and shipped myself. Not because I did not know better: because I was shipping fast, much of the code was AI-written and did not hold my conventions, and whenever a dashboard looked odd I was already two features into the next thing.</p>
 
   <div class="chart">
     <p class="chart-title">Two names, and only the code knows the difference</p>
-    <p class="chart-sub">One of these fires when an alarm is created. The other fires when the editor opens, which is not the same moment. Nothing in either name tells you which is which, and I wrote both of them.</p>
+    <p class="chart-sub">One fires when an alarm is created. The other fires when the editor opens. Nothing in either name tells you which, and I wrote both.</p>
     <div class="bar-row"><span class="bar-name">alarm_created</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-val">5,563</span></div>
     <div class="bar-row"><span class="bar-name">alarm_add</span><span class="bar-track"><span class="bar-fill hot" style="width:95%"></span></span><span class="bar-val">5,282</span></div>
-    <p class="note">Count "alarms created" with either name on its own, or by adding the two together, and you get an answer that looks entirely reasonable and is wrong.</p>
+    <p class="note">Count "alarms created" with either name, or with both, and the answer looks reasonable and is wrong.</p>
   </div>
 
-  <p class="note">Source: my own analytics project, 365 days to 25 July 2026, across three shipped iOS apps. Nothing modelled, nothing extrapolated.</p>
+  <p class="note">My own analytics project, 365 days to 25 July 2026. Nothing modelled.</p>
 
   <h2 style="margin-top:44px">What it found in my alarm app</h2>
-  <p>Four real findings from the same scan, each a different kind of problem. Nothing here is invented. Every one of them is the kind of thing I would have caught in a review, if a review had been happening.</p>
+  <p>Two from the same scan. Both the kind of thing I would have caught in a review, if a review had been happening.</p>
 
   <div class="finds">
 
@@ -308,34 +308,10 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
         <span class="find-title"><span class="pill screen">FABNapTipOverlay</span> sends no events at all</span>
         <span class="tag red">error</span><span class="find-rule">coverage/dark-screen</span>
       </div>
-      <p>A coachmark overlay that teaches people the nap feature. It is presented to users and has zero analytics: no screen view, no dismissal, nothing. I cannot tell you how many people have seen it, or whether it works.</p>
+      <p>The coachmark that teaches people the nap feature. No screen view, no dismissal, nothing. I cannot tell you how many people have seen it, or whether it works.</p>
       <p class="find-code">presented via fullScreenCover in MainTabView.swift:117</p>
       <div class="find-fix"><span class="find-fix-label">Proposed change</span>
         <p>Send a shown and dismissed pair, so the coachmark can be judged rather than assumed.</p></div>
-    </div>
-
-    <div class="find">
-      <div class="find-head">
-        <span class="tag amber">Rename</span>
-        <span class="find-title">Two events, one concept: <span class="pill event">review_prompt</span> and <span class="pill event">review_prompt_requested</span></span>
-        <span class="tag red">error</span><span class="find-rule">naming/duplicate-concept</span>
-      </div>
-      <p>I renamed the event and the old name kept arriving from versions already on people's phones. 610 events under the new name, 160 under the old one, so a fifth of the concept sits somewhere I had stopped looking.</p>
-      <p class="find-code">610 vs 160 events, both still current at the time of the scan</p>
-      <div class="find-fix"><span class="find-fix-label">Proposed change</span>
-        <p>Keep the name current code sends, treat the other as historical, and note the cutover for anyone querying across it.</p></div>
-    </div>
-
-    <div class="find">
-      <div class="find-head">
-        <span class="tag amber">Rename</span>
-        <span class="find-title"><span class="pill event">alarm_add</span> does not do what its name says</span>
-        <span class="tag amber">warning</span><span class="find-rule">naming/verb</span>
-      </div>
-      <p>It fires when the alarm editor opens, not when an alarm is added. It reads like a duplicate of <span class="pill event">alarm_created</span>, it sits next to it in every list, and it has 5,282 events behind it. Anyone counting alarms created from this name gets a number that is wrong and looks fine.</p>
-      <p class="find-code">fires from AddEditAlarmView.swift:347, on open</p>
-      <div class="find-fix"><span class="find-fix-label">Proposed change</span>
-        <p>Rename it for the moment it actually marks, or drop it and rely on the screen view already sent on the same line.</p></div>
     </div>
 
     <div class="find">
@@ -344,7 +320,7 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
         <span class="find-title"><span class="pill event">Application Installed</span> arrives without <span class="pill prop">app_name</span></span>
         <span class="tag red">error</span><span class="find-rule">properties/missing-super-prop</span>
       </div>
-      <p>1,330 installs in 90 days carried no app_name, because the SDK captures the install before my code registers that property. Three apps report into one project and every query filters on app_name, so my install numbers were quietly excluding every install.</p>
+      <p>1,330 installs in 90 days arrived without it, because the SDK captures the install before my code registers the property. Three apps share one project and every query filters on app_name, so my install numbers were excluding every install.</p>
       <p class="find-code">registered after SDK setup, so the first event misses it</p>
       <div class="find-fix"><span class="find-fix-label">Proposed change</span>
         <p>Register the property before SDK setup completes, or filter installs on the SDK's own app property instead.</p></div>
@@ -355,7 +331,7 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
 
 <section id="naming"><div class="wrap">
   <h2>How to name an event so this stops happening</h2>
-  <p>Most of the mess above is a naming problem, and naming problems are solvable with a rule rather than discipline. Here is the same handful of moments written three ways: the snake_case convention most product analytics tools assume, camelCase, and the one I use.</p>
+  <p>Most of that is a naming problem, and naming problems are solvable with a rule rather than discipline. The same moments, three ways.</p>
 
   <div class="tblwrap"><table>
     <thead><tr>
@@ -383,10 +359,10 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
     </tbody>
   </table></div>
 
-  <p style="margin-top:20px">All three work, as long as something holds the line. The failure mode is never the convention you picked, it is having three of them at once.</p>
+  <p style="margin-top:20px">All three work. The failure mode is never the convention you picked, it is having three of them at once.</p>
 
   <h3 style="margin-top:34px;font-size:17px">Why the location goes first</h3>
-  <p>An event list is sorted alphabetically, and that is the only order you ever see it in.</p>
+  <p>An event list is sorted alphabetically. That is the only order you ever see it in.</p>
   <div class="compare">
     <div class="card bad">
       <p class="card-label">One flow, as it sorts</p>
@@ -406,36 +382,12 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
       <p class="ev">flow_step_name <span>= "Set first alarm"</span></p>
     </div>
   </div>
-  <p class="note">Two problems in one picture. The names do not group, and the step number was never a name in the first place: it is a property.</p>
-
-  <h3 style="margin-top:34px;font-size:17px">Name or property?</h3>
-  <p>The test: could you ever want to compare these to each other? Then they are one event and a property.</p>
-  <div class="compare">
-    <div class="card bad">
-      <p class="card-label">21 events you cannot compare</p>
-      <p class="ev">onboarding_step_1_viewed</p>
-      <p class="ev">onboarding_step_2_viewed</p>
-      <p class="ev">onboarding_step_3_viewed</p>
-      <p class="ev" style="color:var(--faint)">... and eighteen more</p>
-      <p class="ev" style="color:var(--faint)">no drop-off curve without</p>
-      <p class="ev" style="color:var(--faint)">stitching 21 queries together</p>
-    </div>
-    <div class="card good">
-      <p class="card-label">One event you can slice</p>
-      <p class="ev">onboardingStep_view</p>
-      <p class="sub">properties, not events</p>
-      <p class="ev">flow_name <span>= "onboarding"</span></p>
-      <p class="ev">flow_step <span>= 5</span></p>
-      <p class="ev">flow_step_name <span>= "Set first alarm"</span></p>
-      <p class="ev" style="color:var(--faint)">group by step, done</p>
-    </div>
-  </div>
+  <p class="note">Two problems at once: the names do not group, and the step number was never a name. It is a property.</p>
 
   <h3 style="margin-top:34px;font-size:17px">The rest of the rules</h3>
   <ul class="rules">
-    <li><b>In an event name</b>, one underscore, and it separates <b>fields, not words</b>. <code>onboardingStep_complete</code> splits into exactly two parts, so a name is parseable, not just readable. That is why the location is camelCase: it keeps a multi-word location inside one field.</li>
-    <li><b>Properties are a different namespace</b>, and the two-field rule stops at the event name. They are plain snake_case with as many words as they need: <code>flow_step_name</code>, <code>element_group</code>, <code>days_since_first_launch</code>. That is deliberate. On a single event of mine, 43 of 71 properties belong to the analytics SDK, not to me, and those are multi-word snake_case whatever I do. A rule I can only apply to a third of the namespace is not a rule.</li>
-    <li>Properties get <b>their own, looser rules</b> instead, which is where the value actually is: one casing, a subject prefix so they group (<code>alarm_sound</code>, <code>repeat_kind</code>, <code>tag_name</code>), no synonyms for one concept, and predictable shapes (<code>_count</code>, <code>_date</code>, <code>is_</code> and <code>has_</code> for booleans).</li>
+    <li><b>In an event name</b>, one underscore, separating <b>fields, not words</b>. <code>onboardingStep_complete</code> splits into exactly two parts, so the name is parseable rather than only readable. Hence camelCase for the location: it keeps a multi-word location in one field.</li>
+    <li><b>Properties are a different namespace</b>, so the rule stops at the event name. On one event of mine, 43 of 71 properties are the SDK's, and multi-word snake_case whatever I do. Properties get looser rules: one casing, a subject prefix, no synonyms, predictable shapes like <code>_count</code> and <code>has_</code>.</li>
     <li>The verb comes from a <b>closed list</b>, so add, new and save never become three names for one thing.</li>
     <li>Not a screen? An <code>app</code>-prefixed location, so there is never a second underscore: <code>app_open</code>, <code>appCalendarSync_fail</code>.</li>
   </ul>
@@ -445,7 +397,7 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
   </div>
   <p class="note">The whole verb list. Ten words, closed on purpose.</p>
 
-  <p style="margin-top:18px">It comes out of eight years of analytics and data governance work. Take it and use it without installing anything, and if your team already has a convention, keep yours. The point is that something enforces it.</p>
+  <p style="margin-top:18px">Take it and use it without installing anything. If your team has a convention already, keep yours. The point is that something enforces it.</p>
 </div></section>
 
 <section id="who"><div class="wrap">
@@ -463,8 +415,8 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
 <section id="about"><div class="wrap">
   <h2>Who is building it</h2>
   <p>I am Emil. I spent eight years in web and digital analytics, then data development and data governance, at a bank. A lot of that job was working out why two numbers that should match do not. I also make iOS apps.</p>
-  <p>Which is why the state of my own apps annoyed me enough to build this. Knowing the rules was never the hard part. Holding them while shipping at speed is. I build fast, a lot of the code is AI-written, and that produces instrumentation which looks correct and quietly is not: a plausible event name that does not match the convention, a screen wired up with the tracking left out. I would spot something strange in a dashboard, make a mental note, and never get back to it, because there was always another feature or another app.</p>
-  <p>So the problem was not expertise, it was that nothing enforced the expertise at the moment the code was written. That is what a linter is for. Nobody argues you can skip the type checker because you know what the types are.</p>
+  <p>Knowing the rules was never the hard part. Holding them while shipping at speed is. I build fast, much of the code is AI-written, and that produces instrumentation which looks correct and quietly is not: a plausible event name off the convention, a screen wired up with the tracking left out. I would spot something odd in a dashboard, make a mental note, and never get back to it, because there was always another feature or another app.</p>
+  <p>The problem was not expertise, it was that nothing enforced it at the moment the code was written. That is what a linter is for. Nobody argues you can skip the type checker because you know what the types are.</p>
   <p>If you have an existing event taxonomy that needs untangling, or you want a naming convention set up properly for your product, that is work I can help with directly. The tool is one way in. A conversation is the other.</p>
 </div></section>
 
@@ -474,9 +426,6 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
   <details open><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>What is analytics instrumentation?</summary>
     <p>The code in your app that sends analytics events: the calls, the event names they use, and the properties they attach. It sits between what a user does and what your product analytics tool records. Developers write it, which is exactly why it drifts from whatever plan the rest of the team believes exists.</p></details>
 
-  <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>What is an event taxonomy, or a tracking plan?</summary>
-    <p>The set of event names your product sends, plus the rules behind them. A good one is predictable enough that two developers pick the same name for the same kind of action without asking each other, and descriptive detail lives in event properties rather than multiplying into new event names. Most teams keep this in a spreadsheet, which is where the drift starts.</p></details>
-
   <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>Why do event names become inconsistent?</summary>
     <p>Because nothing checks them. Every developer picks a verb, and add, create, new and save all end up meaning the same thing. No build fails. The names accumulate release after release until two of them cover one action, and every count built on either one is short.</p></details>
 
@@ -484,10 +433,10 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
     <p>Not in a dashboard. A dashboard only shows what was sent, so tracking you forgot is invisible there by definition. The only way to find it is to compare the screens that exist in your code against the events your code actually sends.</p></details>
 
   <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>Should events use snake_case or camelCase?</summary>
-    <p>Either, as long as one of them is applied consistently. snake_case object_action is what most product analytics tools assume, and camelCase suits teams already writing everything else that way. The damage comes from mixing conventions, or from an open-ended verb list where add, create, new and save all end up meaning the same thing. Pick one, close the verb list, and keep descriptive detail in properties rather than in the name.</p></details>
+    <p>Either, as long as one is applied consistently. snake_case object_action is what most product analytics tools assume; camelCase suits teams already writing everything else that way. The damage comes from mixing them, or from an open-ended verb list where add, create, new and save all mean the same thing. Pick one, close the verb list, and keep detail in properties rather than names.</p></details>
 
   <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>Should the convention apply to properties too?</summary>
-    <p>No, and for a practical reason rather than a stylistic one. Most properties on any event come from the analytics SDK rather than from you, and those are multi-word snake_case whatever you do. On one real event of mine, 43 of 71 properties were the SDK's. A convention you can apply to a third of a namespace does not produce consistency, it produces two conventions. Properties also end up as warehouse columns, where camelCase is actively awkward: some engines lowercase unquoted identifiers and destroy the word boundary you were relying on. Properties get their own looser rules instead: one casing, a subject prefix so related ones group, no synonyms, and predictable shapes like <code>_count</code> or <code>has_</code>.</p></details>
+    <p>No, for a practical reason rather than a stylistic one. Most properties on an event come from the SDK, not from you, and they are multi-word snake_case whatever you do: on one real event of mine, 43 of 71. A convention you can apply to a third of a namespace produces two conventions, not consistency. Properties also become warehouse columns, where some engines lowercase unquoted identifiers and destroy the word boundary you were relying on. So properties get looser rules: one casing, a subject prefix so related ones group, no synonyms, predictable shapes like <code>_count</code>.</p></details>
 
   <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>When can I use it?</summary>
     <p>It is in development and running against real shipped apps. Join the waitlist and you will get one email when it opens.</p></details>
