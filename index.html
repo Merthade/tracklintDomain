@@ -285,7 +285,7 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
 
 <section id="evidence"><div class="wrap">
   <h2>What it looked like in my own apps</h2>
-  <p>Not a survey, and not somebody else's case study. This is real event volume from apps I built and shipped myself. I know how event taxonomies are meant to work and these still got past me, because nothing was checking.</p>
+  <p>Not a survey, and not somebody else's case study. This is real event volume from apps I built and shipped myself. None of it is here because I did not know better. It is here because I was shipping fast, a lot of the code was written by AI and did not hold my conventions, and every time something looked odd in a dashboard I was already two features into the next thing.</p>
 
   <div class="chart">
     <p class="chart-title">Two names, and only the code knows the difference</p>
@@ -298,7 +298,7 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
   <p class="note">Source: my own analytics project, 365 days to 25 July 2026, across three shipped iOS apps. Nothing modelled, nothing extrapolated.</p>
 
   <h2 style="margin-top:44px">What it found in my alarm app</h2>
-  <p>Four real findings from the same scan, each a different kind of problem. Nothing here is invented, and all four were news to me.</p>
+  <p>Four real findings from the same scan, each a different kind of problem. Nothing here is invented. Every one of them is the kind of thing I would have caught in a review, if a review had been happening.</p>
 
   <div class="finds">
 
@@ -455,6 +455,7 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
     <li>Anyone who has built a funnel, shown it to somebody, and later found the events behind it were split in two.</li>
     <li>Developers who want numbers they can trust without becoming an analytics specialist.</li>
     <li>Small product teams who inherited a codebase whose event tracking nobody can explain.</li>
+    <li>Anyone shipping quickly with AI writing a fair share of the code, where the tracking looks plausible and nothing has checked it.</li>
   </ul>
   <p style="margin-top:16px">If nobody on your team looks at the analytics, none of this costs you anything, and you can safely ignore it.</p>
 </div></section>
@@ -462,7 +463,8 @@ footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
 <section id="about"><div class="wrap">
   <h2>Who is building it</h2>
   <p>I am Emil. I spent eight years in web and digital analytics, then data development and data governance, at a bank. A lot of that job was working out why two numbers that should match do not. I also make iOS apps.</p>
-  <p>I started Tracklint because my own apps had every problem described on this page, and I only found out when a dashboard I had built could not answer a question I had. Knowing better did not help. Nothing was checking.</p>
+  <p>Which is why the state of my own apps annoyed me enough to build this. Knowing the rules was never the hard part. Holding them while shipping at speed is. I build fast, a lot of the code is AI-written, and that produces instrumentation which looks correct and quietly is not: a plausible event name that does not match the convention, a screen wired up with the tracking left out. I would spot something strange in a dashboard, make a mental note, and never get back to it, because there was always another feature or another app.</p>
+  <p>So the problem was not expertise, it was that nothing enforced the expertise at the moment the code was written. That is what a linter is for. Nobody argues you can skip the type checker because you know what the types are.</p>
   <p>If you have an existing event taxonomy that needs untangling, or you want a naming convention set up properly for your product, that is work I can help with directly. The tool is one way in. A conversation is the other.</p>
 </div></section>
 
