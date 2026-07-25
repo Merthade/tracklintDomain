@@ -123,19 +123,24 @@ h1{font-size:39px;line-height:1.15;letter-spacing:-0.03em;margin-bottom:18px}
   -webkit-mask-image:radial-gradient(76% 66% at 46% 22%,#000,transparent 76%)}
 .hero .wrap{position:relative;z-index:1}
 
-/* the linter passing over the names: a slow sweep across the compare cards */
+/* a scanning line passing over each card, tinted to match its own heading */
 .card{position:relative;overflow:hidden}
-.hero .card.bad:before{content:"";position:absolute;left:0;right:0;height:38%;top:-38%;pointer-events:none;
-  background:linear-gradient(180deg,transparent,rgba(63,214,143,.12) 60%,rgba(63,214,143,.26));
-  border-bottom:1px solid rgba(63,214,143,.42);
+.hero .card:before{content:"";position:absolute;left:0;right:0;height:34%;top:-34%;pointer-events:none;
   animation:sweep 5.4s cubic-bezier(.4,0,.5,1) infinite}
-@keyframes sweep{0%{top:-38%}62%{top:100%}100%{top:100%}}
+.hero .card.bad:before{
+  background:linear-gradient(180deg,transparent,rgba(242,109,109,.10) 60%,rgba(242,109,109,.22));
+  border-bottom:1px solid rgba(242,109,109,.55)}
+.hero .card.good:before{
+  background:linear-gradient(180deg,transparent,rgba(63,214,143,.10) 60%,rgba(63,214,143,.22));
+  border-bottom:1px solid rgba(63,214,143,.55);
+  animation-delay:.45s}
+@keyframes sweep{0%{top:-34%}62%{top:100%}100%{top:100%}}
 .ev .flag{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);
   margin-left:5px;vertical-align:middle;animation:blip 2.6s ease-in-out infinite}
 @keyframes blip{0%,100%{opacity:.35}50%{opacity:1}}
 @media (prefers-reduced-motion: reduce){
-  .hero .card.bad:before,.ev .flag{animation:none}
-  .hero .card.bad:before{display:none}
+  .hero .card:before,.ev .flag{animation:none}
+  .hero .card:before{display:none}
 }
 
 /* recreated finding cards (illustrative, no real customer or app data) */
