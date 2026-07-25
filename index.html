@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<!--
+  tracklint.dev launch page. Static HTML, no build step. Deploys to any static
+  host (Cloudflare Pages). The only external request is the PostHog SDK.
+
+  Analytics: cookieless on purpose. persistence:'memory' + disable_cookie means no
+  cookies and no localStorage, so no consent banner is required under GDPR (Emil is
+  EU-based). autocapture is off, so the email field is never touched. Events follow
+  Tracklint's own where_what convention, because it would be daft not to.
+
+  SCOPE RULE (Emil, 2026-07-25): this page sells the PROBLEM, not a feature list.
+  Do not enumerate capabilities, do not publish a roadmap, do not promise
+  behaviour. Feature detail gets added later, once the tool has settled and Emil
+  is comfortable committing to it in public.
+
+  SEO comes from problem-space language (analytics instrumentation, event naming,
+  tracking plan, event taxonomy, data quality), which stays true whatever the
+  tool becomes, so nothing here needs retracting later.
+
+  Copy rules: no em dashes, no en dashes, no emoji, no smart quotes, no hype or
+  absolutes, no named competitors, first person, short lines.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Tracklint: analytics instrumentation and event naming, checked in your code</title>
+<meta name="description" content="Tracklint checks the analytics instrumentation in your app's source code: missing tracking on new screens, and event names that drift apart across releases. A code-first alternative to maintaining a tracking plan by hand. Join the waitlist.">
+<link rel="canonical" href="https://tracklint.dev/">
+<meta name="robots" content="index, follow">
+<meta name="author" content="Emil Ozols">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tracklint.dev/">
+<meta property="og:title" content="Tracklint: analytics instrumentation and event naming, checked in your code">
+<meta property="og:description" content="Your product data is only as good as the code that sends it. Tracklint checks analytics instrumentation and event naming from the source.">
+<meta property="og:site_name" content="Tracklint">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Tracklint: analytics instrumentation, checked in your code">
+<meta name="twitter:description" content="Your product data is only as good as the code that sends it.">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230f766e'/><path d='M9 17l4 4 10-10' stroke='%233fd68f' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"WebSite","name":"Tracklint","url":"https://tracklint.dev/","description":"Analytics instrumentation and event naming quality, checked in your codebase.","author":{"@type":"Person","name":"Emil Ozols"}},
+{"@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"What is analytics instrumentation?","acceptedAnswer":{"@type":"Answer","text":"The code in your app that sends analytics events: the calls, the event names they use, and the properties they attach. It is the layer between what a user does and what your product analytics tool records, and developers write it rather than managing it in the analytics tool itself."}},
+{"@type":"Question","name":"What is an event taxonomy or tracking plan?","acceptedAnswer":{"@type":"Answer","text":"The set of event names your product sends plus the rules behind them. A good one is predictable enough that two developers pick the same name for the same kind of action, and descriptive detail lives in event properties instead of turning into new event names. Most teams keep it in a spreadsheet, where it drifts away from the code."}},
+{"@type":"Question","name":"Why do analytics event names become inconsistent?","acceptedAnswer":{"@type":"Answer","text":"Because nothing checks them. Every developer picks a verb, and add, create, new and save all end up meaning the same thing. Nothing errors, no build fails, and the names accumulate over releases until two names cover one action and every funnel built on them is short."}},
+{"@type":"Question","name":"How do you find screens with missing analytics tracking?","acceptedAnswer":{"@type":"Answer","text":"Not in a dashboard, because a dashboard only shows what was sent, so tracking you forgot is invisible there by definition. Finding it means comparing the screens that exist in the code against the events the code actually sends."}},
+{"@type":"Question","name":"When can I use Tracklint?","acceptedAnswer":{"@type":"Answer","text":"It is in development and being used against real shipped apps. Join the waitlist for one email when it opens."}}
+]}]}
+</script>
+
+<style>
+:root{
+  --bg:#0a0d12; --panel:#10151d; --panel-2:#151b26; --border:#202938;
+  --text:#e6ebf2; --muted:#96a0b0; --faint:#67707e;
+  --accent:#3fd68f; --accent-dim:#1d5c42; --teal:#0f766e; --red:#f26d6d;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:800px;margin:0 auto;padding:0 24px}
+section{padding:56px 0;border-bottom:1px solid var(--border)}
+section:last-of-type{border-bottom:none}
+h2{font-size:23px;line-height:1.28;letter-spacing:-0.015em;margin-bottom:12px}
+p{color:var(--muted);max-width:70ch}
+p+p{margin-top:14px}
+
+header.top{padding:20px 0}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:27px;height:27px;flex:none}
+.brand-name{font-weight:700;font-size:16px;letter-spacing:-0.01em}
+.brand-sub{font-size:11px;color:var(--muted);margin-top:-3px}
+
+.hero{padding:66px 0 56px;border-bottom:1px solid var(--border)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;color:var(--accent);text-transform:uppercase;letter-spacing:0.11em;margin-bottom:18px}
+h1{font-size:39px;line-height:1.15;letter-spacing:-0.03em;margin-bottom:18px}
+.hero .lede{font-size:17.5px;max-width:64ch}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px;align-items:center}
+.btn{font-family:inherit;font-size:14.5px;font-weight:600;padding:11px 20px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);cursor:pointer;display:inline-block}
+.btn-primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn-primary:hover{background:#12897f;text-decoration:none}
+.btn:hover{text-decoration:none;border-color:var(--faint)}
+.cta-note{font-size:12.5px;color:var(--faint)}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:34px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:17px}
+.card-label{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:11px;font-weight:600}
+.card.bad .card-label{color:var(--red)}
+.card.good .card-label{color:var(--accent)}
+.ev{font-family:var(--mono);font-size:12.5px;padding:3.5px 0;color:var(--text)}
+.ev span{color:var(--faint)}
+
+.chart{background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:20px;margin-top:24px}
+.chart-title{font-size:14.5px;font-weight:600;margin-bottom:3px;color:var(--text)}
+.chart-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.bar-row{display:grid;grid-template-columns:minmax(110px,180px) 1fr auto;gap:12px;align-items:center;padding:5px 0}
+.bar-name{font-family:var(--mono);font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis}
+.bar-track{display:block;background:var(--panel-2);border-radius:4px;height:22px;overflow:hidden}
+.bar-fill{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.bar-fill.hot{background:var(--red);opacity:.7}
+.bar-val{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.note{font-size:12.5px;color:var(--faint);margin-top:14px}
+
+/* ambient hero backdrop: soft glow + fine grid, both very low contrast */
+.hero{position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:-40% 0 auto -10%;height:120%;pointer-events:none;
+  background:radial-gradient(48% 46% at 20% 16%,rgba(63,214,143,.17),transparent 68%),
+             radial-gradient(42% 44% at 84% 6%,rgba(15,118,110,.30),transparent 70%),
+             radial-gradient(30% 30% at 62% 62%,rgba(90,169,249,.07),transparent 72%)}
+.hero:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.9;
+  background-image:linear-gradient(rgba(45,58,78,.55) 1px,transparent 1px),linear-gradient(90deg,rgba(45,58,78,.55) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(76% 66% at 46% 22%,#000,transparent 76%);
+  -webkit-mask-image:radial-gradient(76% 66% at 46% 22%,#000,transparent 76%)}
+.hero .wrap{position:relative;z-index:1}
+
+/* the linter passing over the names: a slow sweep across the compare cards */
+.card{position:relative;overflow:hidden}
+.card.bad:before{content:"";position:absolute;left:0;right:0;height:38%;top:-38%;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(63,214,143,.12) 60%,rgba(63,214,143,.26));
+  border-bottom:1px solid rgba(63,214,143,.42);
+  animation:sweep 5.4s cubic-bezier(.4,0,.5,1) infinite}
+@keyframes sweep{0%{top:-38%}62%{top:100%}100%{top:100%}}
+.ev .flag{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);
+  margin-left:5px;vertical-align:middle;animation:blip 2.6s ease-in-out infinite}
+@keyframes blip{0%,100%{opacity:.35}50%{opacity:1}}
+@media (prefers-reduced-motion: reduce){
+  .card.bad:before,.ev .flag{animation:none}
+  .card.bad:before{display:none}
+}
+
+/* recreated finding cards (illustrative, no real customer or app data) */
+.finds{margin-top:26px;display:flex;flex-direction:column;gap:14px}
+.find{background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:17px}
+.find-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px}
+.find-title{font-size:14.5px;font-weight:600;color:var(--text);flex:1;min-width:200px}
+.tag{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag.blue{color:#7ebcfb;background:rgba(90,169,249,.13)}
+.tag.amber{color:#f0c26e;background:rgba(232,179,75,.13)}
+.tag.red{color:#f88;background:rgba(242,109,109,.13)}
+.tag.slate{color:#9aa8ba;background:rgba(125,139,159,.15)}
+.find-rule{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.find p{font-size:13.5px;max-width:none}
+.find-code{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:9px}
+.find-fix{margin-top:12px;background:rgba(63,214,143,.05);border:1px solid var(--accent-dim);border-radius:8px;padding:11px 13px}
+.find-fix-label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin-bottom:3px}
+.find-fix p{color:var(--text);font-size:13.5px}
+.pill{font-family:var(--mono);font-size:12px;padding:1px 6px;border-radius:4px;white-space:nowrap}
+.pill.event{color:#7ebcfb;background:rgba(90,169,249,.13)}
+.pill.prop{color:#f0c26e;background:rgba(232,179,75,.13)}
+.pill.screen{color:#c7a6f9}
+
+.who li{list-style:none;color:var(--muted);padding:6px 0 6px 22px;position:relative;font-size:14.5px;max-width:72ch}
+.who li:before{content:"";position:absolute;left:3px;top:14px;width:6px;height:6px;border-radius:50%;background:var(--accent-dim)}
+
+details{border-top:1px solid var(--border);padding:15px 0}
+details:first-of-type{border-top:none}
+summary{cursor:pointer;font-weight:600;font-size:15.5px;list-style:none;display:flex;align-items:center;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary svg{width:13px;height:13px;color:var(--faint);flex:none;transition:transform .18s}
+details[open] summary svg{transform:rotate(90deg);color:var(--accent)}
+details p{margin-top:9px;font-size:14.5px;padding-left:23px}
+
+.signup{background:var(--panel);border:1px solid var(--teal);border-radius:12px;padding:26px}
+.form{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+.form input{flex:1;min-width:230px;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-size:14.5px;font-family:inherit}
+.form input:focus{outline:none;border-color:var(--accent)}
+.form-status{font-size:13.5px;margin-top:13px;min-height:20px}
+.form-status.ok{color:var(--accent)}
+.form-status.err{color:var(--red)}
+
+footer{padding:30px 0 44px;color:var(--faint);font-size:13px}
+.foot-in{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+@media (max-width:680px){
+  h1{font-size:30px}
+  h2{font-size:20.5px}
+  .compare{grid-template-columns:1fr}
+  section{padding:42px 0}
+}
+</style>
+
+<script>
+// PostHog, cookieless. persistence 'memory' + disable_cookie: nothing is stored on
+// the visitor's device, so no consent banner is needed. autocapture off so the
+// email input is never captured. The phc_ key is a public, write-only project token.
+(function () {
+  var s = document.createElement("script");
+  s.src = "https://eu-assets.i.posthog.com/static/array.js";
+  s.async = true;
+  s.onload = function () {
+    if (!window.posthog || !window.posthog.init) return;
+    posthog.init("phc_ztIjBWZp495eGWUZSUprsXSLzyElBWMcf2xc65kKfE5", {
+      api_host: "https://eu.i.posthog.com",
+      persistence: "memory",
+      disable_cookie: true,
+      autocapture: false,
+      capture_pageview: false,
+      person_profiles: "identified_only",
+      loaded: function (ph) {
+        // app_name keeps site traffic out of the mobile apps' filtered queries
+        ph.register({ app_name: "tracklint-site" });
+        ph.capture("$pageview");
+      },
+    });
+  };
+  document.head.appendChild(s);
+})();
+</script>
+</head>
+<body>
+
+<header class="top"><div class="wrap brand">
+  <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0f766e"/><path d="M9 17l4 4 10-10" stroke="#3fd68f" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div><div class="brand-name">Tracklint</div><div class="brand-sub">analytics instrumentation linter</div></div>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <p class="eyebrow">Analytics instrumentation linter</p>
+  <h1>Your product data is only as good as the code that sends it.</h1>
+  <p class="lede">Tracklint checks the analytics instrumentation in your codebase: the screens shipping with no event tracking, and the event names that drifted apart over a year of releases. It reads your source, because a dashboard can only show you what you remembered to send.</p>
+  <div class="cta">
+    <a class="btn btn-primary" href="#waitlist">Join the waitlist</a>
+    <span class="cta-note">In development. One email when it opens, nothing else.</span>
+  </div>
+
+  <div class="compare">
+    <div class="card bad">
+      <p class="card-label">A year of shipping, unchecked</p>
+      <p class="ev">alarm_add <span>and</span> alarm_created<span class="flag"></span></p>
+      <p class="ev">review_prompt <span>and</span> review_prompt_requested<span class="flag"></span></p>
+      <p class="ev">app_opened <span>and</span> Application Opened</p>
+      <p class="ev">share_prompt <span>(noun? verb? nobody knows)</span><span class="flag"></span></p>
+    </div>
+    <div class="card good">
+      <p class="card-label">One convention, held to</p>
+      <p class="ev">alarm_created <span>one name per moment</span></p>
+      <p class="ev">review_prompted <span>one concept, one event</span></p>
+      <p class="ev">app_opened <span>the same name everywhere</span></p>
+      <p class="ev">share_prompted <span>a verb, past tense</span></p>
+    </div>
+  </div>
+</div></section>
+
+<section id="problem"><div class="wrap">
+  <h2>Tracking breaks quietly, and a dashboard cannot tell you</h2>
+  <p>Analytics instrumentation is code, but it is the only code with no failure mode. A missing event does not throw. A misnamed event does not fail a build. Nothing goes red. Your app keeps working, events keep arriving, and the numbers are quietly wrong for months.</p>
+  <p>It shows up in two shapes. Coverage gaps: a screen ships, the event is forgotten, and nobody notices until someone asks a question the data cannot answer. Naming drift: two event names grow around one action, so every funnel, retention curve and conversion rate built on either one is short, in a way that still looks perfectly reasonable.</p>
+  <p>Both are invisible in a product analytics tool, because anything downstream of your code can only report what your code actually sent. Tracking you forgot is undetectable there by definition. That is why the check belongs where the events are written, next to the code and in review, rather than in a tracking plan spreadsheet that drifts a little further from reality with every release.</p>
+</div></section>
+
+<section id="evidence"><div class="wrap">
+  <h2>What it looked like in my own apps</h2>
+  <p>Not a survey, and not somebody else's case study. This is real event volume from apps I built and shipped myself. I know how event taxonomies are meant to work and these still got past me, because nothing was checking.</p>
+
+  <div class="chart">
+    <p class="chart-title">Two names, and only the code knows the difference</p>
+    <p class="chart-sub">One of these fires when an alarm is created. The other fires when the editor opens, which is not the same moment. Nothing in either name tells you which is which, and I wrote both of them.</p>
+    <div class="bar-row"><span class="bar-name">alarm_created</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-val">5,563</span></div>
+    <div class="bar-row"><span class="bar-name">alarm_add</span><span class="bar-track"><span class="bar-fill hot" style="width:95%"></span></span><span class="bar-val">5,282</span></div>
+    <p class="note">Count "alarms created" with either name on its own, or by adding the two together, and you get an answer that looks entirely reasonable and is wrong.</p>
+  </div>
+
+  <p class="note">Source: my own analytics project, 365 days to 25 July 2026, across three shipped iOS apps. Nothing modelled, nothing extrapolated.</p>
+
+  <h2 style="margin-top:44px">The shapes this takes in a real codebase</h2>
+  <p>Four of them, written out the way they surface in review. The examples below use invented event names, not anybody's real product.</p>
+
+  <div class="finds">
+
+    <div class="find">
+      <div class="find-head">
+        <span class="tag blue">Add tracking</span>
+        <span class="find-title"><span class="pill screen">CheckoutReviewView</span> sends no events at all</span>
+        <span class="tag red">error</span><span class="find-rule">coverage/dark-screen</span>
+      </div>
+      <p>The last screen before payment is presented to users and has zero analytics: no screen view, no interaction events. You cannot see how often people reach it, or how many turn back at it.</p>
+      <p class="find-code">presented as a sheet from CheckoutFlow, no tracking calls in scope</p>
+      <div class="find-fix"><span class="find-fix-label">Proposed change</span>
+        <p>Send a screen view when it appears, so the step becomes visible in the funnel.</p></div>
+    </div>
+
+    <div class="find">
+      <div class="find-head">
+        <span class="tag amber">Rename</span>
+        <span class="find-title">Two events cover one action: <span class="pill event">cart_add</span> and <span class="pill event">cart_added</span></span>
+        <span class="tag red">error</span><span class="find-rule">naming/duplicate-concept</span>
+      </div>
+      <p>Both are live and both are still sending. Any count of items added to the cart is short unless the query unions the pair, and nothing about either name says which one the current code uses.</p>
+      <p class="find-code">two call sites, two different names, same moment</p>
+      <div class="find-fix"><span class="find-fix-label">Proposed change</span>
+        <p>Keep the one current code sends, treat the other as historical, and note the cutover date for anyone querying across it.</p></div>
+    </div>
+
+    <div class="find">
+      <div class="find-head">
+        <span class="tag amber">Rename</span>
+        <span class="find-title"><span class="pill event">signup_prompt</span> is a thing, not an action</span>
+        <span class="tag amber">warning</span><span class="find-rule">naming/verb</span>
+      </div>
+      <p>Sibling events use a past-tense verb, so this one sorts and reads apart from the rest. Small on its own, and the reason a taxonomy stops being predictable once a few of them pile up.</p>
+      <div class="find-fix"><span class="find-fix-label">Proposed change</span>
+        <p>Rename so the last part is an action, matching the events around it.</p></div>
+    </div>
+
+    <div class="find">
+      <div class="find-head">
+        <span class="tag slate">Fix properties</span>
+        <span class="find-title"><span class="pill event">order_completed</span> carries <span class="pill prop">payment_method</span> on only some events</span>
+        <span class="tag amber">warning</span><span class="find-rule">properties/call-site-drift</span>
+      </div>
+      <p>One code path passes the full order, another does not, so the same event name arrives in two different shapes. Any breakdown by payment method silently drops the events that came from the second path.</p>
+      <p class="find-code">two call sites, one passes the order object, one does not</p>
+      <div class="find-fix"><span class="find-fix-label">Proposed change</span>
+        <p>Send the same properties from every call site, so one event name means one contract.</p></div>
+    </div>
+
+  </div>
+</div></section>
+
+<section id="who"><div class="wrap">
+  <h2>Who this is for</h2>
+  <ul class="who">
+    <li>Teams where one person owns the reporting and someone else writes the tracking code.</li>
+    <li>Anyone who has built a funnel, shown it to somebody, and later found the events behind it were split in two.</li>
+    <li>Developers who want numbers they can trust without becoming an analytics specialist.</li>
+    <li>Small product teams who inherited a codebase whose event tracking nobody can explain.</li>
+  </ul>
+  <p style="margin-top:16px">If nobody on your team looks at the analytics, none of this costs you anything, and you can safely ignore it.</p>
+</div></section>
+
+<section id="about"><div class="wrap">
+  <h2>Who is building it</h2>
+  <p>I am Emil. I spent eight years in web and digital analytics, then data development and data governance, at a bank. A lot of that job was working out why two numbers that should match do not. I also make iOS apps.</p>
+  <p>I started Tracklint because my own apps had every problem described on this page, and I only found out when a dashboard I had built could not answer a question I had. Knowing better did not help. Nothing was checking.</p>
+  <p>If you have an existing event taxonomy that needs untangling, or you want a naming convention set up properly for your product, that is work I can help with directly. The tool is one way in. A conversation is the other.</p>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>Questions</h2>
+
+  <details open><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>What is analytics instrumentation?</summary>
+    <p>The code in your app that sends analytics events: the calls, the event names they use, and the properties they attach. It sits between what a user does and what your product analytics tool records. Developers write it, which is exactly why it drifts from whatever plan the rest of the team believes exists.</p></details>
+
+  <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>What is an event taxonomy, or a tracking plan?</summary>
+    <p>The set of event names your product sends, plus the rules behind them. A good one is predictable enough that two developers pick the same name for the same kind of action without asking each other, and descriptive detail lives in event properties rather than multiplying into new event names. Most teams keep this in a spreadsheet, which is where the drift starts.</p></details>
+
+  <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>Why do event names become inconsistent?</summary>
+    <p>Because nothing checks them. Every developer picks a verb, and add, create, new and save all end up meaning the same thing. No build fails. The names accumulate release after release until two of them cover one action, and every count built on either one is short.</p></details>
+
+  <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>How do you find screens with missing tracking?</summary>
+    <p>Not in a dashboard. A dashboard only shows what was sent, so tracking you forgot is invisible there by definition. The only way to find it is to compare the screens that exist in your code against the events your code actually sends.</p></details>
+
+  <details><summary><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>When can I use it?</summary>
+    <p>It is in development and running against real shipped apps. Join the waitlist and you will get one email when it opens.</p></details>
+</div></section>
+
+<section id="waitlist"><div class="wrap">
+  <div class="signup">
+    <h2>Get one email when it opens</h2>
+    <p>No newsletter, no drip sequence, and your address goes nowhere else.</p>
+    <form class="form" id="waitlist-form" novalidate>
+      <label for="email" style="position:absolute;left:-9999px">Email address</label>
+      <input type="email" id="email" name="email" placeholder="you@company.com" required autocomplete="email" inputmode="email">
+      <button class="btn btn-primary" type="submit">Join the waitlist</button>
+    </form>
+    <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+  </div>
+</div></section>
+
+<footer><div class="wrap foot-in">
+  <span>Tracklint, an analytics instrumentation linter. tracklint.dev</span>
+  <span>Built by Emil Ozols</span>
+</div></footer>
+
+<script>
+document.getElementById("waitlist-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("email").value.trim();
+  const status = document.getElementById("form-status");
+  const btn = e.target.querySelector("button");
+  status.className = "form-status";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    status.className = "form-status err";
+    status.textContent = "That does not look like an email address.";
+    return;
+  }
+  btn.disabled = true;
+  status.textContent = "Adding you...";
+  try {
+    const r = await fetch("/api/waitlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || "Something went wrong. Try again in a minute?");
+    status.className = "form-status ok";
+    status.textContent = "You are on the list. Talk soon.";
+    e.target.reset();
+    // no email sent to analytics: the address lives in KV, the event is just a count
+    if (window.posthog) posthog.capture("waitlist_submit", { already: !!data.already });
+  } catch (err) {
+    status.className = "form-status err";
+    status.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

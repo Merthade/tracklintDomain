@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tracklint.dev/sitemap.xml
