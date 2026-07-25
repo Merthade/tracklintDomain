@@ -396,25 +396,37 @@ document.getElementById("waitlist-form").addEventListener("submit", async (e) =>
   }
   btn.disabled = true;
   status.textContent = "Adding you...";
+
+  // Primary sink: a PostHog event carrying the address, which is the pattern
+  // already proven on the Android waitlist and needs no backend, so this page
+  // works on plain static hosting (GitHub Pages) as well as Cloudflare.
+  var captured = false;
+  if (window.posthog) {
+    posthog.capture("waitlist_submit", { email: email, page: location.pathname });
+    captured = true;
+  }
+
+  // Secondary sink, best effort: if the host runs _worker.js (Cloudflare), the
+  // address also lands in KV, which dedupes and survives ad blockers. A 404 here
+  // is expected and harmless on static hosting.
   try {
-    const r = await fetch("/api/waitlist", {
+    await fetch("/api/waitlist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email: email }),
     });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.error || "Something went wrong. Try again in a minute?");
+  } catch (err) { /* no endpoint on static hosting; the event above is the record */ }
+
+  if (captured) {
     status.className = "form-status ok";
     status.textContent = "You are on the list. Talk soon.";
     e.target.reset();
-    // no email sent to analytics: the address lives in KV, the event is just a count
-    if (window.posthog) posthog.capture("waitlist_submit", { already: !!data.already });
-  } catch (err) {
+  } else {
+    // posthog blocked or still loading and no endpoint answered: do not claim success
     status.className = "form-status err";
-    status.textContent = err.message;
-  } finally {
-    btn.disabled = false;
+    status.textContent = "Could not reach us just now. Try again, or email me directly.";
   }
+  btn.disabled = false;
 });
 </script>
 </body>

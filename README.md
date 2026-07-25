@@ -12,15 +12,33 @@ analytics instrumentation linter. Static HTML, no build step.
 | `img/` | screenshots (currently unused by the page) |
 | `robots.txt`, `sitemap.xml` | crawling basics |
 
-## Deploying (Cloudflare Pages)
+## Deploying
 
-Connect this repo to a Pages project, or drag the folder into the dashboard.
-A root `_worker.js` works with both, which a `functions/` directory does not.
+Works on either host, because the waitlist has two sinks.
 
-**One required step for signups to persist:** create a KV namespace, then bind it
-to the Pages project as variable `WAITLIST` (Settings > Bindings). Without it the
-form returns a clean "not available right now" rather than pretending to succeed.
-Read the signups from the KV browser in the dashboard.
+**GitHub Pages (current plan).** Repo is public, so Pages is free. Set the custom
+domain in Settings > Pages, which uses the committed `CNAME`. Signups arrive as
+PostHog `waitlist_submit` events carrying the address, the same pattern already
+used for the Android waitlist. `_worker.js` is simply ignored here.
+
+Apex DNS at the registrar (Host `@`, four A records):
+`185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
+plus AAAA: `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`,
+`2606:50c0:8003::153`. Domain verification wants a TXT record whose Host is
+whatever GitHub shows you minus the domain, e.g. `_github-pages-challenge-merthade`.
+
+**Cloudflare Pages (optional upgrade).** Connect the repo and `_worker.js` starts
+answering `POST /api/waitlist`, so addresses also land in a KV namespace bound as
+`WAITLIST` (Settings > Bindings), which dedupes and survives ad blockers. Nothing
+in the page needs changing to move.
+
+## Where signups land
+
+1. **PostHog `waitlist_submit`** (works everywhere, primary). Ad blockers can stop
+   it, so a blocked visitor is told the submit failed rather than shown a false
+   success.
+2. **KV via `_worker.js`** (Cloudflare only, best effort). A 404 here is expected
+   on static hosting and is ignored.
 
 ## Notes
 
